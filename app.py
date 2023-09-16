@@ -21,6 +21,7 @@ from models import db, Artist, Venue, Show
 #----------------------------------------------------------------------------#
 
 app = Flask(__name__)
+app.secret_key = 'the long secret key of fyyur app'
 moment = Moment(app)
 app.config.from_object('config')
 db.init_app(app)
@@ -104,28 +105,38 @@ def show_venue(venue_id):
 @app.route('/venues/create', methods=['GET'])
 def create_venue_form():
   form = VenueForm()
+  print(form.phone)
   return render_template('forms/new_venue.html', form=form)
 
 @app.route('/venues/create', methods=['POST'])
 def create_venue_submission():
     error = False
+    
     try:
-        venue = Venue()
-        venue.name = request.form['name']
-        venue.city = request.form['city']
-        venue.state = request.form['state']
-        venue.address = request.form['address']
-        venue.phone = request.form['phone']
-        tmp_genres = request.form.getlist('genres')
-        venue.genres = ','.join(tmp_genres)
-        venue.facebook_link = request.form['facebook_link']
-        venue.image_link = request.form['image_link']
-        venue.website_link = request.form['website_link']
-        venue.seeking_talent = request.form['seeking_talent']=='y'
-        venue.seeking_description = request.form['seeking_description']
+        form = VenueForm(request.form)
+        if form.validate_on_submit():
+          venue = Venue()
+          venue.name = request.form['name']
+          venue.city = request.form['city']
+          venue.state = request.form['state']
+          venue.address = request.form['address']
+          venue.phone = request.form['phone']
+          tmp_genres = request.form.getlist('genres')
+          venue.genres = ','.join(tmp_genres)
+          venue.facebook_link = request.form['facebook_link']
+          venue.image_link = request.form['image_link']
+          venue.website_link = request.form['website_link']
+          venue.seeking_talent = request.form['seeking_talent']=='y'
+          venue.seeking_description = request.form['seeking_description']
         
-        db.session.add(venue)
-        db.session.commit()
+          db.session.add(venue)
+          db.session.commit()
+        else:
+          error=True
+          for field, message in form.errors.items():
+            print("Form error")
+            flash(field + ' - ' + str(message), 'danger')
+            return render_template('forms/new_venue.html', form=form)
     except:
         error = True
         db.session.rollback()
@@ -219,6 +230,7 @@ def edit_artist_submission(artist_id):
     form = ArtistForm(request.form)
     error = False
     try:
+ 
         artist.name = request.form['name']
         artist.city = request.form['city']
         artist.state = request.form['state']
@@ -235,9 +247,15 @@ def edit_artist_submission(artist_id):
           artist.seeking_venue = False
         if 'seeking_description' in request.form:
           artist.seeking_description = request.form['seeking_description']
-        
-        db.session.add(artist)
-        db.session.commit()
+        if form.validate_on_submit():          
+          db.session.add(artist)
+          db.session.commit()
+        else:
+          error=True
+          for field, message in form.errors.items():
+            print("Form error")
+            flash(field + ' - ' + str(message), 'danger')
+            return render_template('forms/edit_artist.html', form=form,artist=artist)
     except:
         error = True
         db.session.rollback()
@@ -286,23 +304,30 @@ def edit_venue_submission(venue_id):
     form = VenueForm(request.form)
     error = False
     try:
-        venue.name = request.form['name']
-        venue.city = request.form['city']
-        venue.state = request.form['state']
-        venue.address = request.form['address']
-        venue.phone = request.form['phone']
-        tmp_genres = request.form.getlist('genres')
-        venue.genres = ','.join(tmp_genres)
-        venue.facebook_link = request.form['facebook_link']
-        venue.image_link = request.form['image_link']
-        venue.website_link = request.form['website_link']
-        if 'seeking_talent' in request.form:
-          venue.seeking_talent = request.form['seeking_talent'] == 'y'
-        if 'seeking_description' in request.form:
-          venue.seeking_description = request.form['seeking_description']
-        
+      
+      venue.name = request.form['name']
+      venue.city = request.form['city']
+      venue.state = request.form['state']
+      venue.address = request.form['address']
+      venue.phone = request.form['phone']
+      tmp_genres = request.form.getlist('genres')
+      venue.genres = ','.join(tmp_genres)
+      venue.facebook_link = request.form['facebook_link']
+      venue.image_link = request.form['image_link']
+      venue.website_link = request.form['website_link']
+      if 'seeking_talent' in request.form:
+        venue.seeking_talent = request.form['seeking_talent'] == 'y'
+      if 'seeking_description' in request.form:
+        venue.seeking_description = request.form['seeking_description']
+      if form.validate_on_submit(): 
         db.session.add(venue)
         db.session.commit()
+      else:
+          error=True
+          for field, message in form.errors.items():
+            print("Form error")
+            flash(field + ' - ' + str(message), 'danger')
+            return render_template('forms/edit_venue.html', form=form,venue=venue)        
     except:
         error = True
         db.session.rollback()
@@ -328,6 +353,7 @@ def create_artist_form():
 def create_artist_submission():
 
     error = False
+    form = ArtistForm(request.form)
     try:
         artist = Artist()
         artist.name = request.form['name']
@@ -342,8 +368,15 @@ def create_artist_submission():
         if 'seeking_venue' in request.form:
           artist.seeking_venue = request.form['seeking_venue'] == 'y'
         artist.seeking_description = request.form['seeking_description']
-        db.session.add(artist)
-        db.session.commit()
+        if form.validate_on_submit():
+          db.session.add(artist)
+          db.session.commit()
+        else:
+          error=True
+          for field, message in form.errors.items():
+            print("Form error")
+            flash(field + ' - ' + str(message), 'danger')
+            return render_template('forms/new_artist.html', form=form)     
     except:
         error = True
         db.session.rollback()
